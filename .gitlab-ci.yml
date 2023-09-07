@@ -109,11 +109,7 @@ build_windows:
     paths:
       - ${PACKAGE_FILE_WINDOWS}
 
-# TODO: Enable this when we get access to macOS runners.
 build_macos:
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
   stage: build
   tags:
     - saas-macos-medium-m1
@@ -123,8 +119,7 @@ build_macos:
     CTEST_OUTPUT_ON_FAILURE: "ON"
   before_script:
     # Install necessary packages.
-    - brew update
-    - brew install cmake ninja
+    - brew install cmake ninja p7zip
   script:
     # Prepare build.
     - mkdir -p build
@@ -135,25 +130,23 @@ build_macos:
     - cmake --build .
 
     # Run unit tests.
-    - ctest -j 3
+    - ctest -j 5
 
     # Run system tests.
     - ../test_scripts/run_file_lock_stresstest.sh
     - ../test_scripts/build_with_buildcache.sh
 
-    # Run static checks
-    - cd ..
-    - test_scripts/run_linters.py -p build
-
     # Install & package.
+    - cd ..
     - cmake --install build --prefix buildcache --strip
-    - tar -cv -I "gzip -9" -f ${PACKAGE_FILE_MACOS} buildcache
+    - 7z a -tzip -mx=9 ${PACKAGE_FILE_MACOS} buildcache
 
   artifacts:
     expose_as: 'BuildCache macOS'
     name: 'buildcache-macOS'
     paths:
-      - ${PACKAGE_FILE_MACOS}
+      # For some reason ${PACKAGE_FILE_MACOS} does not work here. Is it a bug?
+      - buildcache-macos.zip
 
 upload_job:
   rules:
@@ -165,11 +158,15 @@ upload_job:
       artifacts: true
     - job: build_windows
       artifacts: true
+    - job: build_macos
+      artifacts: true
   script:
     - |
       curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file "${PACKAGE_FILE_LINUX}" "${PACKAGE_REGISTRY_URL}/${PACKAGE_FILE_LINUX}"
     - |
       curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file "${PACKAGE_FILE_WINDOWS}" "${PACKAGE_REGISTRY_URL}/${PACKAGE_FILE_WINDOWS}"
+    - |
+      curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file "${PACKAGE_FILE_MACOS}" "${PACKAGE_REGISTRY_URL}/${PACKAGE_FILE_MACOS}"
 
 release_job:
   rules:
@@ -190,6 +187,8 @@ release_job:
           url: "${PACKAGE_REGISTRY_URL}/${PACKAGE_FILE_LINUX}"
         - name: "${PACKAGE_FILE_WINDOWS}"
           url: "${PACKAGE_REGISTRY_URL}/${PACKAGE_FILE_WINDOWS}"
+        - name: "${PACKAGE_FILE_MACOS}"
+          url: "${PACKAGE_REGISTRY_URL}/${PACKAGE_FILE_MACOS}"
 
 pages:
   rules:
