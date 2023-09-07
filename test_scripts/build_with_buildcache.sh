@@ -73,7 +73,7 @@ PROJDIR="/tmp/proj-$$"
 SRCDIR="${PROJDIR}/src"
 BUILDDIR="${PROJDIR}/out"
 rm -rf "${PROJDIR}"
-PROJURL=https://github.com/mbitsnbites/buildcache.git
+PROJURL=https://gitlab.com/bits-n-bites/buildcache.git
 PROJVERSION=master
 git clone --branch ${PROJVERSION} --depth 1 ${PROJURL} "${PROJDIR}"
 

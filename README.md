@@ -1,4 +1,4 @@
-# BuildCache [![Build and Test](https://github.com/mbitsnbites/buildcache/workflows/Build%20and%20Test/badge.svg)](https://github.com/mbitsnbites/buildcache/actions)
+# BuildCache
 
 BuildCache is an advanced compiler accelerator that caches and reuses build
 results to avoid unnecessary re-compilations, and thereby speeding up the build
@@ -10,7 +10,7 @@ It is similar in spirit to [ccache](https://ccache.samba.org/),
 
 ## Download
 
-Pre-built binaries of BuildCache can be downloaded [here](https://github.com/mbitsnbites/buildcache/releases/latest).
+Pre-built binaries of BuildCache can be downloaded [here](https://gitlab.com/bits-n-bites/buildcache/-/releases/permalink/latest).
 
 ## Features
 
@@ -79,9 +79,4 @@ compatible within a major version (e.g. 1.x).
 The BuildCache internals are documented using Doxygen, and the latest
 generated documentation can be found here:
 
-* [https://mbitsnbites.github.io/buildcache/](https://mbitsnbites.github.io/buildcache/)
-
-Feel free to ask questions and discuss ideas at:
-
-* [BuildCache Discussions](https://github.com/mbitsnbites/buildcache/discussions)
-
+* [https://bits-n-bites.gitlab.io/buildcache/](https://bits-n-bites.gitlab.io/buildcache/)

@@ -456,7 +456,7 @@ void print_help(const char* program_name) {
   std::cout << "    -h, --help            print this help text\n";
   std::cout << "    -V, --version         print version and copyright information\n";
   std::cout << "\n";
-  std::cout << "See also https://github.com/mbitsnbites/buildcache\n";
+  std::cout << "See also https://gitlab.com/bits-n-bites/buildcache\n";
 }
 }  // namespace
 
