@@ -1,0 +1,217 @@
+---
+workflow:
+  name: "Build and test BuildCache"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG =~ /^v[0-9]+.*/
+
+variables:
+  PACKAGE_REGISTRY_URL: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/releases/${CI_COMMIT_TAG}"
+  PACKAGE_FILE_LINUX: "buildcache-linux.tar.gz"
+  PACKAGE_FILE_WINDOWS: "buildcache-windows.zip"
+  PACKAGE_FILE_MACOS: "buildcache-macos.zip"
+
+stages:
+  - build
+  - upload
+  - release
+  - doxygen
+
+build_linux:
+  stage: build
+  image: ubuntu:20.04
+  variables:
+    CTEST_OUTPUT_ON_FAILURE: "ON"
+  before_script:
+    - apt-get update
+    - |
+      DEBIAN_FRONTEND=noninteractive apt-get install -y \
+          build-essential \
+          clang-format \
+          clang-tidy \
+          cmake \
+          g++ \
+          git \
+          ninja-build
+  script:
+    # Prepare build.
+    - mkdir -p build
+    - cd build
+    - cmake -S ../src -B . -DCMAKE_BUILD_TYPE=Release -G Ninja -DDISABLE_SSL=on
+
+    # Build.
+    - cmake --build .
+
+    # Run unit tests.
+    - ctest -j 3
+
+    # Run system tests.
+    - ../test_scripts/run_file_lock_stresstest.sh
+    - ../test_scripts/build_with_buildcache.sh
+
+    # Run static checks
+    - cd ..
+    - test_scripts/run_linters.py -p build
+
+    # Install & package.
+    - cmake --install build --prefix buildcache --strip
+    - tar -cv -I "gzip -9" -f ${PACKAGE_FILE_LINUX} buildcache
+
+  artifacts:
+    expose_as: 'BuildCache Linux'
+    name: 'buildcache-linux'
+    paths:
+      - ${PACKAGE_FILE_LINUX}
+
+build_windows:
+  stage: build
+  tags:
+    - shared-windows
+    - windows-1809
+  variables:
+    CTEST_OUTPUT_ON_FAILURE: "ON"
+    MSVC_PATH: "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools"
+  before_script:
+    # "Run" vsdevcmd.bat in PowerShell, to set up MSVC environment variables.
+    # See: https://github.com/microsoft/vswhere/issues/150#issuecomment-485381959
+    - |
+      if ($MSVC_PATH -and (Test-Path "$MSVC_PATH\Common7\Tools\vsdevcmd.bat")) {
+        $json = $(& "${env:COMSPEC}" /s /c "`"$MSVC_PATH\Common7\Tools\vsdevcmd.bat`" -no_logo -arch=x64 && pwsh -Command `"Get-ChildItem env: | Select-Object Key,Value | ConvertTo-Json`"")
+        if ($LASTEXITCODE -ne 0) {
+          Write-Error "($LASTEXITCODE) $MSVC_PATH\Common7\Tools\vsdevcmd.bat: $json"
+        } else {
+          $($json | ConvertFrom-Json) | ForEach-Object {
+            $k, $v = $_.Key, $_.Value
+            Set-Content env:\"$k" "$v"
+          }
+        }
+      }
+  script:
+    # Prepare build.
+    - New-Item -ItemType Directory -Path build -Force
+    - cd build
+    - cmake -S ../src -B . -G "Visual Studio 16 2019" -A x64
+
+    # Build.
+    - cmake --build . --config Release
+
+    # Run unit tests.
+    - ctest -j 3 -C Release
+
+    # Install & package.
+    - cd ..
+    - cmake --install build --prefix buildcache --strip
+    - 7z a -tzip -mx=9 $Env:PACKAGE_FILE_WINDOWS buildcache
+
+  artifacts:
+    expose_as: 'BuildCache Windows'
+    name: 'buildcache-windows'
+    paths:
+      - ${PACKAGE_FILE_WINDOWS}
+
+# TODO: Enable this when we get access to macOS runners.
+build_macos:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+  stage: build
+  tags:
+    - saas-macos-medium-m1
+  image: macos-12-xcode-14
+  variables:
+    HOMEBREW_NO_AUTO_UPDATE: 1
+    CTEST_OUTPUT_ON_FAILURE: "ON"
+  before_script:
+    # Install necessary packages.
+    - brew update
+    - brew install cmake ninja
+  script:
+    # Prepare build.
+    - mkdir -p build
+    - cd build
+    - cmake -S ../src -B . -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64"
+
+    # Build.
+    - cmake --build .
+
+    # Run unit tests.
+    - ctest -j 3
+
+    # Run system tests.
+    - ../test_scripts/run_file_lock_stresstest.sh
+    - ../test_scripts/build_with_buildcache.sh
+
+    # Run static checks
+    - cd ..
+    - test_scripts/run_linters.py -p build
+
+    # Install & package.
+    - cmake --install build --prefix buildcache --strip
+    - tar -cv -I "gzip -9" -f ${PACKAGE_FILE_MACOS} buildcache
+
+  artifacts:
+    expose_as: 'BuildCache macOS'
+    name: 'buildcache-macOS'
+    paths:
+      - ${PACKAGE_FILE_MACOS}
+
+upload_job:
+  rules:
+    - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG =~ /^v[0-9]+.*/
+  stage: upload
+  image: curlimages/curl:latest
+  needs:
+    - job: build_linux
+      artifacts: true
+    - job: build_windows
+      artifacts: true
+  script:
+    - |
+      curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file "${PACKAGE_FILE_LINUX}" "${PACKAGE_REGISTRY_URL}/${PACKAGE_FILE_LINUX}"
+    - |
+      curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file "${PACKAGE_FILE_WINDOWS}" "${PACKAGE_REGISTRY_URL}/${PACKAGE_FILE_WINDOWS}"
+
+release_job:
+  rules:
+    - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG =~ /^v[0-9]+.*/
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  needs:
+    - job: upload_job
+  script:
+    - echo 'Running release_job'
+  release:
+    tag_name: '$CI_COMMIT_TAG'
+    name: 'Release $CI_COMMIT_TAG'
+    description: 'Release for tag $CI_COMMIT_TAG'
+    assets:
+      links:
+        - name: "${PACKAGE_FILE_LINUX}"
+          url: "${PACKAGE_REGISTRY_URL}/${PACKAGE_FILE_LINUX}"
+        - name: "${PACKAGE_FILE_WINDOWS}"
+          url: "${PACKAGE_REGISTRY_URL}/${PACKAGE_FILE_WINDOWS}"
+
+pages:
+  rules:
+    - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG =~ /^v[0-9]+.*/
+  stage: doxygen
+  image: ubuntu:23.04
+  before_script:
+    - apt-get update
+    - |
+      DEBIAN_FRONTEND=noninteractive apt-get install -y \
+          build-essential \
+          cmake \
+          doxygen \
+          g++
+  script:
+    # Prepare build.
+    - cmake -S src -B build
+
+    # Generate doxygen documentation.
+    - cmake --build build --target doc
+  artifacts:
+    paths:
+      - build/doc/html
+  publish: build/doc/html
+
