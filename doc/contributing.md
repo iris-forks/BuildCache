@@ -3,10 +3,10 @@
 BuildCache is an open source project, and anyone is of course welcome to
 contribute to it.
 
-Use [GitHub issues](https://github.com/mbitsnbites/buildcache/issues) to report
+Use [GitLab issues](https://gitlab.com/bits-n-bites/buildcache/-/issues) to report
 any problems with BuildCache, or to request new features.
 
-Use the [GitHub fork + pull request flow](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request-from-a-fork)
+Use the [GitLab forking workflow](https://docs.gitlab.com/ee/user/project/repository/forking_workflow.html)
 to suggest patches to the project.
 
 ## Coding conventions
