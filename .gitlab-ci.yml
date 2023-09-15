@@ -184,10 +184,13 @@ release_job:
     assets:
       links:
         - name: "${PACKAGE_FILE_LINUX}"
+          filepath: "/${PACKAGE_FILE_LINUX}"
           url: "${PACKAGE_REGISTRY_URL}/${PACKAGE_FILE_LINUX}"
         - name: "${PACKAGE_FILE_WINDOWS}"
+          filepath: "/${PACKAGE_FILE_WINDOWS}"
           url: "${PACKAGE_REGISTRY_URL}/${PACKAGE_FILE_WINDOWS}"
         - name: "${PACKAGE_FILE_MACOS}"
+          filepath: "/${PACKAGE_FILE_MACOS}"
           url: "${PACKAGE_REGISTRY_URL}/${PACKAGE_FILE_MACOS}"
 
 pages:
