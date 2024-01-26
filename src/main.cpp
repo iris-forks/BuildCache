@@ -26,6 +26,7 @@
 #include <sys/sys_utils.hpp>
 #include <wrappers/ccc_analyzer_wrapper.hpp>
 #include <wrappers/clang_cl_wrapper.hpp>
+#include <wrappers/cppcheck_wrapper.hpp>
 #include <wrappers/gcc_wrapper.hpp>
 #include <wrappers/ghs_wrapper.hpp>
 #include <wrappers/lua_wrapper.hpp>
@@ -112,9 +113,12 @@ std::unique_ptr<bcache::program_wrapper_t> find_suitable_wrapper(
                 if (!wrapper->can_handle_command()) {
                   wrapper.reset(new bcache::ti_arp32_wrapper_t(exe_path, args));
                   if (!wrapper->can_handle_command()) {
-                    wrapper.reset(new bcache::ccc_analyzer_wrapper_t(exe_path, args));
+                    wrapper.reset(new bcache::cppcheck_wrapper_t(exe_path, args));
                     if (!wrapper->can_handle_command()) {
-                      wrapper = nullptr;
+                      wrapper.reset(new bcache::ccc_analyzer_wrapper_t(exe_path, args));
+                      if (!wrapper->can_handle_command()) {
+                        wrapper = nullptr;
+                      }
                     }
                   }
                 }
