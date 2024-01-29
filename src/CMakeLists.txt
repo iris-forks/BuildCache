@@ -32,6 +32,12 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 enable_testing()
 include(cmake/buildcache_add_test.cmake)
 
+# Hack for detecting MinGW in cross compilations that just set the CC and CXX environment variables
+# to point to mingw compilers.
+if("${CMAKE_CXX_COMPILER}" MATCHES "mingw")
+  set(MINGW True)
+endif()
+
 if(MINGW)
   # For ease of deployment, statically link the standard libraries when using MinGW.
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libgcc -static-libstdc++")
