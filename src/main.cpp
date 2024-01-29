@@ -325,6 +325,29 @@ std::unique_ptr<bcache::program_wrapper_t> find_suitable_wrapper(
   std::exit(return_code);
 }
 
+[[noreturn]] void inspect_cache_entry_and_exit(const std::string& hash_and_file) {
+  try {
+    // Extract hash and file.
+    auto hash = hash_and_file;
+    std::string file;
+    const auto colon_pos = hash_and_file.find(':');
+    if (colon_pos != std::string::npos) {
+      hash = hash_and_file.substr(0, colon_pos);
+      file = hash_and_file.substr(colon_pos + 1);
+    }
+
+    bcache::local_cache_t cache;
+    if (!cache.inspect(hash, file)) {
+      std::cerr << "*** No such cache entry was found\n";
+    }
+  } catch (const std::exception& e) {
+    std::cerr << "*** Unexpected error: " << e.what() << "\n";
+  } catch (...) {
+    std::cerr << "*** Unexpected error.\n";
+  }
+  std::exit(0);
+}
+
 [[noreturn]] void wrap_compiler_and_exit(int argc, const char** argv) {
   auto args = bcache::string_list_t(argc, argv);
   bool was_wrapped = false;
@@ -424,12 +447,6 @@ void init_config(const char* bcache_dir = nullptr) noexcept {
   }
 }
 
-bool compare_arg(const std::string& arg,
-                 const std::string& short_form,
-                 const std::string& long_form = "") {
-  return (arg == short_form) || (arg == long_form);
-}
-
 void print_help(const char* program_name) {
   std::cout << "Usage:\n";
   std::cout << "    " << program_name << " [options] <command>\n";
@@ -452,11 +469,38 @@ void print_help(const char* program_name) {
   std::cout << "    -z, --zero-stats      zero statistics counters\n";
   std::cout << "    -H, --housekeeping    perform housekeeping duties\n";
   std::cout << "    -e, --edit-config     edit the configuration file\n";
+  std::cout << "    -i, --inspect HASH[:FILE]\n";
+  std::cout << "                          inspect (show) a specific cache entry\n";
   std::cout << "\n";
   std::cout << "    -h, --help            print this help text\n";
   std::cout << "    -V, --version         print version and copyright information\n";
   std::cout << "\n";
   std::cout << "See also https://gitlab.com/bits-n-bites/buildcache\n";
+}
+
+bool compare_arg(const std::string& arg,
+                 const std::string& short_form,
+                 const std::string& long_form = "") {
+  return (arg == short_form) || (arg == long_form);
+}
+
+std::string compare_arg_get_value(const int argc,
+                                  const char** argv,
+                                  int& arg_pos,
+                                  const std::string& value_name,
+                                  const std::string& short_form,
+                                  const std::string& long_form = "") {
+  std::string value;
+  if ((arg_pos < argc) && compare_arg(argv[arg_pos], short_form, long_form)) {
+    if ((arg_pos + 1) >= argc || argv[arg_pos + 1][0] == '-') {
+      std::cerr << argv[0] << ": missing " << value_name << " for " << argv[arg_pos] << "\n";
+      print_help(argv[0]);
+      std::exit(1);
+    }
+    value = argv[arg_pos + 1];
+    arg_pos += 2;
+  }
+  return value;
 }
 }  // namespace
 
@@ -484,17 +528,12 @@ int main(int argc, const char** argv) {
 
   // Parse BuildCache options (must be given before any command).
   int arg_pos = 1;
-  if ((arg_pos < argc) && compare_arg(argv[arg_pos], "-d", "--directory")) {
-    if ((arg_pos + 1) >= argc || argv[arg_pos + 1][0] == '-') {
-      std::cerr << argv[0] << ": missing PATH for " << argv[arg_pos] << "\n";
-      print_help(argv[0]);
-      std::exit(1);
+  {
+    const auto bcache_dir = compare_arg_get_value(argc, argv, arg_pos, "PATH", "-d", "--directory");
+    if (!bcache_dir.empty()) {
+      // Re-initialize with the cache dir specified in the command line.
+      init_config(bcache_dir.c_str());
     }
-    const auto* bcache_dir = argv[arg_pos + 1];
-    arg_pos += 2;
-
-    // Re-initialize with the cache dir specified in the command line.
-    init_config(bcache_dir);
   }
 
   if ((argc - arg_pos) < 1) {
@@ -504,6 +543,7 @@ int main(int argc, const char** argv) {
 
   // Check if we are running any BuildCache commands.
   const std::string arg_str(argv[arg_pos]);
+  std::string value;
   if (compare_arg(arg_str, "-C", "--clear")) {
     clear_cache_and_exit();
   } else if (compare_arg(arg_str, "-s", "--show-stats")) {
@@ -518,6 +558,9 @@ int main(int argc, const char** argv) {
     print_version_and_exit();
   } else if (compare_arg(arg_str, "-e", "--edit-config")) {
     edit_config_and_exit();
+  } else if (!(value = compare_arg_get_value(argc, argv, arg_pos, "HASH", "-i", "--inspect"))
+                  .empty()) {
+    inspect_cache_entry_and_exit(value);
   } else if (compare_arg(arg_str, "-h", "--help")) {
     print_help(argv[0]);
     std::exit(0);

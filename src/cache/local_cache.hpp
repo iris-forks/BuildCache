@@ -77,9 +77,11 @@ public:
 
   /// @brief Check if an entry exists in the cache.
   /// @param hash The cache entry identifier.
+  /// @param do_update_stats Whether or not to update cache statistics.
   /// @returns A pair of a cache entry struct and a file lock object. If there was no cache hit,
   /// the entry will be empty, and the file lock object will not hold any lock.
-  std::pair<cache_entry_t, file_lock_t> lookup(const std::string& hash);
+  std::pair<cache_entry_t, file_lock_t> lookup(const std::string& hash,
+                                               const bool do_update_stats = true);
 
   /// @brief Copy a cached file to the local file system.
   /// @param hash The cache entry identifier.
@@ -100,6 +102,17 @@ public:
   /// @note The hash argument is only used for selecting where in the local cache structure to store
   /// the stats file.
   bool update_stats(const std::string& hash, const cache_stats_t& delta) const noexcept;
+
+  /// @brief Inspect (display) a cache entry.
+  ///
+  /// If only a hash is given, the meta data of the cache entry is printed (including stdout and
+  /// stderr).
+  ///
+  /// If a file ID is also given, only the file contents is printed.
+  /// @param hash The hash of the cache entry.
+  /// @param file If non-empty, specifies a file ID.
+  /// @returns true if the entry was found in the cache, otherwise false.
+  bool inspect(const std::string& hash, const std::string& file);
 
 private:
   std::string hash_to_cache_entry_path(const std::string& hash) const;
