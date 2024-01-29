@@ -239,6 +239,12 @@ std::string append_path(const std::string& path, const char* append);
 /// @returns the canonical form of the given path.
 std::string canonicalize_path(const std::string& path);
 
+/// @brief Get the relative form of a path.
+/// @param base The base path to which the path should be made relative.
+/// @param path The path to make relative.
+/// @returns the relative form of the given path.
+std::string relative_path(const std::string& base, const std::string& path);
+
 /// @brief Get the file extension of a path.
 /// @param path The path to a file.
 /// @returns The file extension of the file (including the leading period), or an empty string if

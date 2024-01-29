@@ -254,7 +254,7 @@ TEST_CASE("get_unique_id produces expected results") {
   }
 }
 
-TEST_CASE("Canonicalizing paths work as expected") {
+TEST_CASE("Canonicalizing paths works as expected") {
 #if defined(_WIN32)
   SUBCASE("Absolute path 1") {
     const auto path = file::canonicalize_path(R"(C:\foo\.\.\bar\.)");
@@ -294,6 +294,65 @@ TEST_CASE("Canonicalizing paths work as expected") {
   SUBCASE("Absolute path 4") {
     const auto path = file::canonicalize_path("/foo/bar/");
     CHECK_EQ(path, "/foo/bar");
+  }
+#endif
+}
+
+TEST_CASE("Making relative paths works as expected") {
+#if defined(_WIN32)
+  SUBCASE("Relative path 1") {
+    const auto path = file::relative_path(R"(C:\)", R"(C:\foo\.\.\bar\.)");
+    CHECK_EQ(path, R"(foo\bar)");
+  }
+
+  SUBCASE("Relative path 2") {
+    const auto path = file::relative_path(R"(C:\foo)", R"(C:\foo\.\.\bar\.)");
+    CHECK_EQ(path, R"(bar)");
+  }
+
+  SUBCASE("Relative path 3") {
+    const auto path = file::relative_path(R"(foo2)", R"(foo\.\.\bar\.)");
+    CHECK_EQ(path, R"(..\foo\bar)");
+  }
+
+  SUBCASE("Relative path 4") {
+    const auto path = file::relative_path(R"(C:\)", R"(C:\hello\world)");
+    CHECK_EQ(path, R"(hello\world)");
+  }
+
+  SUBCASE("Relative path 5") {
+    const auto path = file::relative_path(R"(C:\hello\..\world)", R"(C:\hello\world)");
+    CHECK_EQ(path, R"(..\hello\world)");
+  }
+
+  SUBCASE("Relative path 6") {
+    const auto path = file::relative_path(R"(X:\)", R"(C:\foo\.\.\bar\.)");
+    CHECK_EQ(path, R"(C:\foo\bar)");
+  }
+#else
+  SUBCASE("Relative path 1") {
+    const auto path = file::relative_path("/", "/foo/././bar/.");
+    CHECK_EQ(path, "foo/bar");
+  }
+
+  SUBCASE("Relative path 2") {
+    const auto path = file::relative_path("/foo", "/foo/././bar/.");
+    CHECK_EQ(path, "bar");
+  }
+
+  SUBCASE("Relative path 3") {
+    const auto path = file::relative_path("foo2", "foo/././bar/.");
+    CHECK_EQ(path, "../foo/bar");
+  }
+
+  SUBCASE("Relative path 4") {
+    const auto path = file::relative_path("/", "/hello/world");
+    CHECK_EQ(path, "hello/world");
+  }
+
+  SUBCASE("Relative path 5") {
+    const auto path = file::relative_path("/hello/../world", "/hello/world");
+    CHECK_EQ(path, "../hello/world");
   }
 #endif
 }
