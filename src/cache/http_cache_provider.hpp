@@ -60,21 +60,21 @@ private:
   /// @brief Get the full URL for a given object.
   /// @param key The full name of the object.
   /// @returns the full URL for the object.
-  std::string get_object_url(const std::string& key);
+  std::string get_object_url(const std::string& key) const;
 
   /// @brief Get a binary data blob from the remote cache.
   /// @param key The unique key that identifies the data.
   /// @returns the data as a string object.
   /// @throws runtime_error if the data could not be retrieved (e.g. the key does not exist in the
   /// remote cache).
-  std::string get_data(const std::string& key);
+  std::string get_data(const std::string& key) const;
 
   /// @brief Set a binary data blob in the remote cache.
   /// @param key The unique key that identifies the data.
   /// @param data The data as a string object.
   /// @throws runtime_error if the data could not be retrieved (e.g. the key does not exist in the
   /// remote cache).
-  void set_data(const std::string& key, const std::string& data);
+  void set_data(const std::string& key, const std::string& data) const;
 
   std::string m_host;
   std::string m_path;

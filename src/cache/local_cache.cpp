@@ -540,7 +540,8 @@ void local_cache_t::add(const std::string& hash,
   }
 }
 
-std::pair<cache_entry_t, file_lock_t> local_cache_t::lookup(const std::string& hash) {
+std::pair<cache_entry_t, file_lock_t> local_cache_t::lookup(const std::string& hash,
+                                                            const bool do_update_stats) {
   // Get the path to the cache entry.
   const auto cache_entry_path = hash_to_cache_entry_path(hash);
 
@@ -564,10 +565,14 @@ std::pair<cache_entry_t, file_lock_t> local_cache_t::lookup(const std::string& h
     // cache miss).
     const auto cache_entry_file_name = file::append_path(cache_entry_path, CACHE_ENTRY_FILE_NAME);
     const auto entry_data = file::read(cache_entry_file_name);
-    update_stats(hash, cache_stats_t::local_hit());
+    if (do_update_stats) {
+      update_stats(hash, cache_stats_t::local_hit());
+    }
     return std::make_pair(cache_entry_t::deserialize(entry_data), std::move(lock));
   } catch (...) {
-    update_stats(hash, cache_stats_t::local_miss());
+    if (do_update_stats) {
+      update_stats(hash, cache_stats_t::local_miss());
+    }
     return std::make_pair(cache_entry_t(), file_lock_t());
   }
 }
@@ -623,6 +628,46 @@ void local_cache_t::get_file(const std::string& hash,
   // Touch retrieved file to ensure that the file timestamp is up to date,
   // and that it is picked up by build system file trackers such as MSBuild.
   file::touch(target_path);
+}
+
+bool local_cache_t::inspect(const std::string& hash, const std::string& file_id) {
+  const auto cache_entry_path = hash_to_cache_entry_path(hash);
+
+  // Note: The lookup will give us a file lock that is locked until we go out of scope.
+  auto lookup_result = lookup(hash, false);
+  const auto& cached_entry = lookup_result.first;
+  if (cached_entry) {
+    if (!file_id.empty()) {
+      // Print the requested file for an entry.
+      for (const auto& entry_file_id : cached_entry.file_ids()) {
+        if (entry_file_id == file_id) {
+          const auto is_compressed =
+              (cached_entry.compression_mode() == cache_entry_t::comp_mode_t::ALL);
+          const auto source_path = file::append_path(cache_entry_path, file_id);
+          if (is_compressed) {
+            std::cout << comp::decompress(file::read(source_path));
+          } else {
+            std::cout << file::read(source_path);
+          }
+          return true;
+        }
+      }
+    } else {
+      // Print the cache entry meta data.
+      std::cout << "Hash: " << hash << "\n";
+      std::cout << "Path: " << cache_entry_path << "\n\n";
+      std::cout << "[STDOUT]\n" << cached_entry.std_out() << "\n";
+      std::cout << "[STDERR]\n" << cached_entry.std_err() << "\n";
+      std::cout << "[Exit code]\n" << cached_entry.return_code() << "\n\n";
+      std::cout << "[File IDs]\n";
+      for (const auto& file_id : cached_entry.file_ids()) {
+        std::cout << file_id << "\n";
+      }
+      return true;
+    }
+  }
+
+  return false;
 }
 
 }  // namespace bcache

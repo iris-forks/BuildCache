@@ -342,6 +342,35 @@ std::string canonicalize_path(const std::string& path) {
   return result;
 }
 
+std::string relative_path(const std::string& base, const std::string& path) {
+  auto canon_base = canonicalize_path(base);
+  auto canon_path = canonicalize_path(path);
+
+#ifdef _WIN32
+  // On Windows we can not make paths relative across drives.
+  if (canon_base.size() >= 2 && canon_path.size() >= 2 && canon_base[1] == ':' &&
+      canon_path[1] == ':' && canon_base[0] != canon_path[0]) {
+    debug::log(debug::DEBUG) << "Can not make path relative to a different drive: " << canon_path;
+    return canon_path;
+  }
+#endif
+
+  // Walk up the tree until we have a common parent.
+  auto prefix = std::string();
+  while (canon_path.substr(0, canon_base.size()) != canon_base) {
+    prefix += ".." + PATH_SEPARATOR;
+    canon_base = get_dir_part(canon_base);
+  }
+
+  // Remove the common parent.
+  auto rel_path = canon_path.substr(canon_base.size());
+  if ((!rel_path.empty()) && rel_path[0] == PATH_SEPARATOR_CHR) {
+    rel_path = rel_path.substr(1);
+  }
+
+  return prefix + rel_path;
+}
+
 std::string get_extension(const std::string& path) {
   const auto pos = path.rfind('.');
 

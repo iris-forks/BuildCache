@@ -22,6 +22,8 @@ add_library(wrappers
   ccc_analyzer_wrapper.hpp
   clang_cl_wrapper.cpp
   clang_cl_wrapper.hpp
+  cppcheck_wrapper.cpp
+  cppcheck_wrapper.hpp
   gcc_wrapper.cpp
   gcc_wrapper.hpp
   ghs_wrapper.cpp

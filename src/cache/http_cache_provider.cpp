@@ -82,7 +82,7 @@ void http_cache_provider_t::disconnect() {
   m_ready_for_action = false;
 }
 
-std::string http_cache_provider_t::get_object_url(const std::string& key) {
+std::string http_cache_provider_t::get_object_url(const std::string& key) const {
   std::ostringstream ss;
   ss << "http://" << m_host << ":" << m_port << m_path << "/" << key;
   return ss.str();
@@ -148,7 +148,7 @@ std::vector<std::string> http_cache_provider_t::get_header(const std::string& /*
   return {"Content-Type: " + content_type};
 }
 
-std::string http_cache_provider_t::get_data(const std::string& key) {
+std::string http_cache_provider_t::get_data(const std::string& key) const {
   if (!is_connected()) {
     throw std::runtime_error("Can't GET from a disconnected context");
   }
@@ -182,7 +182,7 @@ std::string http_cache_provider_t::get_data(const std::string& key) {
   return data;
 }
 
-void http_cache_provider_t::set_data(const std::string& key, const std::string& data) {
+void http_cache_provider_t::set_data(const std::string& key, const std::string& data) const {
   if (!is_connected()) {
     throw std::runtime_error("Can't PUT to a disconnected context");
   }

@@ -49,6 +49,7 @@ Currently the following compilers and languages are supported:
 | [TI ARM Optimizing C/C++ Compiler](http://www.ti.com/tool/ARM-CGT) | C, C++ | Built-in |
 | TI ARP32 Optimizing C/C++ Compiler | C, C++ | Built-in |
 | [scan-build static analyzer](https://clang-analyzer.llvm.org/scan-build.html) | C, C++ | Built-in |
+| [Cppcheck](https://cppcheck.sourceforge.io/) | C, C++ | Built-in |
 | [Clang-Tidy](https://clang.llvm.org/extra/clang-tidy/) | C, C++ | Lua example |
 
 New backends are relatively easy to add, both as built-in wrappers in C++ and as
