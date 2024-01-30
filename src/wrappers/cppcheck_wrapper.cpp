@@ -199,7 +199,7 @@ void cppcheck_wrapper_t::resolve_args() {
 bool cppcheck_wrapper_t::can_handle_command() {
   // Is Cppcheck being invoked?
   const auto cmd = lower_case(file::get_file_part(m_exe_path.real_path(), false));
-  return cmd.find("cppcheck") == std::string::npos;
+  return cmd.find("cppcheck") != std::string::npos;
 }
 
 std::map<std::string, expected_file_t> cppcheck_wrapper_t::get_build_files() {
