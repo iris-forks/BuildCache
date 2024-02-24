@@ -44,8 +44,10 @@ program_wrapper_t::capabilities_t::capabilities_t(const string_list_t& cap_strin
   for (const auto& str : cap_strings) {
     if (str == "create_target_dirs") {
       m_create_target_dirs = true;
-    } else if (str == "direct_mode") {
+    } else if (!m_direct_mode && str == "direct_mode") {
       m_direct_mode = config::direct_mode();  // Only enable if enabled in the config.
+    } else if (str == "force_direct_mode") {
+      m_direct_mode = true;
     } else if (str == "hard_links") {
       m_hard_links = config::hard_links();  // Only enable if enabled in the config.
     } else {

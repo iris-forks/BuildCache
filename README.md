@@ -37,20 +37,21 @@ Pre-built binaries of BuildCache can be downloaded [here](https://gitlab.com/bit
 
 Currently the following compilers and languages are supported:
 
-| Compiler | Languages | Support |
-| --- | --- | --- |
-| [GCC](https://gcc.gnu.org/) | C, C++ | Built-in |
-| [Clang](https://clang.llvm.org/) | C, C++ | Built-in |
-| [Microsoft Visual C++](https://visualstudio.microsoft.com/vs/features/cplusplus/) | C, C++ | Built-in |
-| [clang-cl](https://clang.llvm.org/docs/UsersManual.html#clang-cl) | C, C++ | Built-in |
-| [QNX SDP (qcc)](https://blackberry.qnx.com/en/embedded-software/qnx-software-development-platform) | C, C++ | Built-in |
-| [Green Hills Optimizing Compilers](https://www.ghs.com/products/compiler.html) | C, C++ | Built-in |
-| [TI TMS320C6000 Optimizing Compiler](http://www.ti.com/tool/C6000-CGT) | C, C++ | Built-in |
-| [TI ARM Optimizing C/C++ Compiler](http://www.ti.com/tool/ARM-CGT) | C, C++ | Built-in |
-| TI ARP32 Optimizing C/C++ Compiler | C, C++ | Built-in |
-| [scan-build static analyzer](https://clang-analyzer.llvm.org/scan-build.html) | C, C++ | Built-in |
-| [Cppcheck](https://cppcheck.sourceforge.io/) | C, C++ | Built-in |
-| [Clang-Tidy](https://clang.llvm.org/extra/clang-tidy/) | C, C++ | Lua example |
+| Compiler                                                                                           | Languages | Support     |
+| -------------------------------------------------------------------------------------------------- | --------- | ----------- |
+| [GCC](https://gcc.gnu.org/)                                                                        | C, C++    | Built-in    |
+| [Clang](https://clang.llvm.org/)                                                                   | C, C++    | Built-in    |
+| [Microsoft Visual C++](https://visualstudio.microsoft.com/vs/features/cplusplus/)                  | C, C++    | Built-in    |
+| [clang-cl](https://clang.llvm.org/docs/UsersManual.html#clang-cl)                                  | C, C++    | Built-in    |
+| [QNX SDP (qcc)](https://blackberry.qnx.com/en/embedded-software/qnx-software-development-platform) | C, C++    | Built-in    |
+| [Green Hills Optimizing Compilers](https://www.ghs.com/products/compiler.html)                     | C, C++    | Built-in    |
+| [TI TMS320C6000 Optimizing Compiler](http://www.ti.com/tool/C6000-CGT)                             | C, C++    | Built-in    |
+| [TI ARM Optimizing C/C++ Compiler](http://www.ti.com/tool/ARM-CGT)                                 | C, C++    | Built-in    |
+| TI ARP32 Optimizing C/C++ Compiler                                                                 | C, C++    | Built-in    |
+| [scan-build static analyzer](https://clang-analyzer.llvm.org/scan-build.html)                      | C, C++    | Built-in    |
+| [Cppcheck](https://cppcheck.sourceforge.io/)                                                       | C, C++    | Built-in    |
+| [rustc](https://www.rust-lang.org/)                                                                 | Rust      | Built-in    |
+| [Clang-Tidy](https://clang.llvm.org/extra/clang-tidy/)                                             | C, C++    | Lua example |
 
 New backends are relatively easy to add, both as built-in wrappers in C++ and as
 [Lua wrappers](doc/lua.md).

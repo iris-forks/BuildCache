@@ -42,6 +42,7 @@
 #define USE_CUSTOM_HMAC
 #endif
 
+#include <cstdint>
 #include <array>
 #include <stdexcept>
 #include <vector>

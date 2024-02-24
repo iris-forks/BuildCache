@@ -281,6 +281,14 @@ std::string append_path(const std::string& path, const char* append) {
   return append_path(path, std::string(append));
 }
 
+std::string join(const std::string& path, const std::string& append) {
+  if (is_absolute_path(append)) {
+    return append;
+  }
+
+  return append_path(path, append);
+}
+
 std::string canonicalize_path(const std::string& path) {
 #ifdef _WIN32
   std::string result;
