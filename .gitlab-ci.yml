@@ -113,7 +113,7 @@ build_macos:
   stage: build
   tags:
     - saas-macos-medium-m1
-  image: macos-12-xcode-14
+  image: macos-13-xcode-14
   variables:
     HOMEBREW_NO_AUTO_UPDATE: 1
     CTEST_OUTPUT_ON_FAILURE: "ON"
