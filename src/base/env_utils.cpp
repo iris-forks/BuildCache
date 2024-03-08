@@ -18,6 +18,7 @@
 //--------------------------------------------------------------------------------------------------
 
 #include <base/env_utils.hpp>
+#include <base/string_list.hpp>
 #include <base/unicode_utils.hpp>
 
 #include <cstdlib>
@@ -33,6 +34,17 @@
 #include <windows.h>
 #undef ERROR
 #undef log
+#endif
+
+#if defined(_WIN32)
+#include <stdlib.h>
+
+// See https://learn.microsoft.com/en-us/cpp/c-runtime-library/environ-wenviron?view=msvc-170.
+extern wchar_t** _wenviron;
+#else
+// See https://pubs.opengroup.org/onlinepubs/9699919799/functions/environ.html for further
+// information (or https://www.gnu.org/software/libc/manual/html_node/Environment-Access.html).
+extern char** environ;
 #endif
 
 namespace bcache {
@@ -103,6 +115,31 @@ std::string get_env(const std::string& env_var) {
   const auto* env = ::getenv(env_var.c_str());
   return env != nullptr ? std::string(env) : std::string();
 #endif
+}
+
+string_list_t get_env() {
+#if defined(_WIN32)
+  static bool is_initialized = false;
+  if (!is_initialized) {
+    // This calls _wgetenv and makes sure that _wenviron is initialized.
+    get_env("BUILDCACHE_DEBUG");
+    is_initialized = true;
+  }
+  auto** env = _wenviron;
+#else
+  auto** env = environ;
+#endif
+
+  string_list_t environment;
+  for (; *env != nullptr; ++env) {
+#if defined(_WIN32)
+    environment += ucs2_to_utf8(std::wstring(*env));
+#else
+    environment += *env;
+#endif
+  }
+
+  return environment;
 }
 
 void set_env(const std::string& env_var, const std::string& value) {

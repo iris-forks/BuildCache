@@ -33,6 +33,7 @@
 #include <wrappers/msvc_wrapper.hpp>
 #include <wrappers/program_wrapper.hpp>
 #include <wrappers/qcc_wrapper.hpp>
+#include <wrappers/rust_wrapper.hpp>
 #include <wrappers/ti_arm_cgt_wrapper.hpp>
 #include <wrappers/ti_arp32_wrapper.hpp>
 #include <wrappers/ti_c6x_wrapper.hpp>
@@ -47,10 +48,12 @@
 #include <xxHash/xxhash.h>
 #include <zstd/zstd.h>
 
+#include <functional>
 #include <iostream>
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 // For program binary identification (e.g. using the "strings", "ident" or "what" tools).
 char PROGRAM_IDENTITY_1[] = "@(#)BuildCache version " BUILDCACHE_VERSION_STRING;
@@ -62,6 +65,12 @@ const std::string BUILDCACHE_EXE_NAME = "buildcache";
 
 bool is_lua_script(const std::string& script_path) {
   return (bcache::lower_case(bcache::file::get_extension(script_path)) == ".lua");
+}
+
+template <typename T>
+bcache::program_wrapper_t* wrapper_create(const bcache::file::exe_path_t& exe_path,
+                                          const bcache::string_list_t& args) {
+  return new T(exe_path, args);
 }
 
 std::unique_ptr<bcache::program_wrapper_t> find_suitable_wrapper(
@@ -95,39 +104,28 @@ std::unique_ptr<bcache::program_wrapper_t> find_suitable_wrapper(
     }
   }
 
+  static const auto& wrappers = std::vector<std::function<bcache::program_wrapper_t*(
+      const bcache::file::exe_path_t& exe_path, const bcache::string_list_t& args)>>(
+      {wrapper_create<bcache::clang_cl_wrapper_t>,
+       wrapper_create<bcache::gcc_wrapper_t>,
+       wrapper_create<bcache::qcc_wrapper_t>,
+       wrapper_create<bcache::ghs_wrapper_t>,
+       wrapper_create<bcache::msvc_wrapper_t>,
+       wrapper_create<bcache::ti_c6x_wrapper_t>,
+       wrapper_create<bcache::ti_arm_cgt_wrapper_t>,
+       wrapper_create<bcache::ti_arp32_wrapper_t>,
+       wrapper_create<bcache::cppcheck_wrapper_t>,
+       wrapper_create<bcache::ccc_analyzer_wrapper_t>,
+       wrapper_create<bcache::rust_wrapper_t>});
+
   // If no Lua wrappers were found, try built in wrappers.
-  if (!wrapper) {
-    wrapper.reset(new bcache::clang_cl_wrapper_t(exe_path, args));
-    if (!wrapper->can_handle_command()) {
-      wrapper.reset(new bcache::gcc_wrapper_t(exe_path, args));
-      if (!wrapper->can_handle_command()) {
-        wrapper.reset(new bcache::qcc_wrapper_t(exe_path, args));
-        if (!wrapper->can_handle_command()) {
-          wrapper.reset(new bcache::ghs_wrapper_t(exe_path, args));
-          if (!wrapper->can_handle_command()) {
-            wrapper.reset(new bcache::msvc_wrapper_t(exe_path, args));
-            if (!wrapper->can_handle_command()) {
-              wrapper.reset(new bcache::ti_c6x_wrapper_t(exe_path, args));
-              if (!wrapper->can_handle_command()) {
-                wrapper.reset(new bcache::ti_arm_cgt_wrapper_t(exe_path, args));
-                if (!wrapper->can_handle_command()) {
-                  wrapper.reset(new bcache::ti_arp32_wrapper_t(exe_path, args));
-                  if (!wrapper->can_handle_command()) {
-                    wrapper.reset(new bcache::cppcheck_wrapper_t(exe_path, args));
-                    if (!wrapper->can_handle_command()) {
-                      wrapper.reset(new bcache::ccc_analyzer_wrapper_t(exe_path, args));
-                      if (!wrapper->can_handle_command()) {
-                        wrapper = nullptr;
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+  for (const auto& wrapper_fn : wrappers) {
+    wrapper.reset(wrapper_fn(exe_path, args));
+    if (wrapper->can_handle_command()) {
+      break;
     }
+
+    wrapper = nullptr;
   }
 
   return wrapper;

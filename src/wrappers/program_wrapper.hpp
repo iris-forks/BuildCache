@@ -97,6 +97,7 @@ protected:
   /// | ------------------ | --------------------------------------- |
   /// | create_target_dirs | Request creation of missing output dirs |
   /// | direct_mode        | Supports direct mode                    |
+  /// | force_direct_mode  | Turns on direct mode for the wrapper    |
   /// | hard_links         | Can use hard links for cached files     |
   ///
   /// In order to support direct mode, @c get_input_files() and @c get_implicit_input_files() need

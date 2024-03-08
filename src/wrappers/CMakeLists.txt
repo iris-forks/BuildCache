@@ -36,6 +36,8 @@ add_library(wrappers
   program_wrapper.hpp
   qcc_wrapper.cpp
   qcc_wrapper.hpp
+  rust_wrapper.cpp
+  rust_wrapper.hpp
   ti_arm_cgt_wrapper.cpp
   ti_arm_cgt_wrapper.hpp
   ti_arp32_wrapper.cpp

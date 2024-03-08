@@ -18,10 +18,15 @@
 //--------------------------------------------------------------------------------------------------
 
 #include <base/env_utils.hpp>
+#include <base/string_list.hpp>
+#include <base/unicode_utils.hpp>
 
 #include <doctest/doctest.h>
 
+#include <algorithm>
 #include <string>
+#include <utility>
+#include <vector>
 
 // Workaround for macOS build errors.
 // See: https://github.com/onqtam/doctest/issues/126
@@ -66,6 +71,51 @@ TEST_CASE("Environment variable manipulation") {
 
     // The variable is no longer defined.
     CHECK_EQ(env_defined(name), false);
+  }
+
+  SUBCASE("Accessing environ/_wenviron should work") {
+    // Define the variables.
+    static const auto& name_values = {
+        std::make_pair("MyTestVariable", "abcd"),
+        std::make_pair(reinterpret_cast<const char*>(u8"БуилдЦаче"),
+                       reinterpret_cast<const char*>(u8"είναι υπέροχο"))};
+
+    for (const auto& entry : name_values) {
+      set_env(entry.first, entry.second);
+    }
+
+    std::vector<string_list_t> results;
+    for (const auto& entry : get_env()) {
+      results.push_back(string_list_t(entry, "="));
+    }
+
+    for (const auto& entry : name_values) {
+      const auto& it =
+          std::find_if(results.begin(), results.end(), [&entry](const string_list_t& env_entry) {
+            return env_entry[0] == entry.first;
+          });
+      // All defined variables should be found.
+      CHECK_NE(it, results.end());
+      // All defined variables should have a value.
+      CHECK_EQ(it->size(), 2);
+      // All defined variables should have the correct value.
+      CHECK_EQ((*it)[1], entry.second);
+    }
+
+    for (const auto& entry : name_values) {
+      unset_env(entry.first);
+    }
+
+    // The variables are no longer defined.
+    for (const auto& entry : get_env()) {
+      string_list_t env_entry(entry, "=");
+      CHECK_EQ(std::find_if(name_values.begin(),
+                            name_values.end(),
+                            [&env_entry](const std::pair<const char*, const char*>& name_value) {
+                              return name_value.first == env_entry[0];
+                            }),
+               name_values.end());
+    }
   }
 }
 

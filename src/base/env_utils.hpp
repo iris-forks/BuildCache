@@ -23,6 +23,8 @@
 #include <string>
 
 namespace bcache {
+class string_list_t;
+
 /// @brief A helper class for reading and parsing environment variables.
 class env_var_t {
 public:
@@ -92,6 +94,10 @@ bool env_defined(const std::string& env_var);
 /// @returns the value as a string, or an empty string if the environment variable was not defined.
 /// @note Use @link env_defined @endlink to check if an environment variable is defined.
 std::string get_env(const std::string& env_var);
+
+/// @brief Get all environment variable for this process.
+/// @returns a list of the enrvironment variables to their values, with the format "NAME=VALUE".
+string_list_t get_env();
 
 /// @brief Set the named environment variable for this process.
 /// @param env_var Name of the environment variable.

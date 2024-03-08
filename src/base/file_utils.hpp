@@ -232,6 +232,14 @@ std::string append_path(const std::string& path, const std::string& append);
 std::string append_path(const std::string& path, const char* append);
 ///@}
 
+/// @brief Join two paths.
+/// @param path The base path.
+/// @param append The path to be adjoined (e.g. a file name).
+/// @returns the adjoined path, using the system path separator.
+/// @note If @c append is absolute this returns @c path, otherwise this behave just like @c
+/// append_path.
+std::string join(const std::string& path, const std::string& append);
+
 /// @brief Get the canonical form of a path.
 ///
 /// The returned path is absolute, and free of relative operators ("." and "..").
