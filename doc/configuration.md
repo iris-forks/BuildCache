@@ -87,7 +87,7 @@ $ BUILDCACHE_DEBUG=2 buildcache g++ -c -O2 hello.cpp -o hello.o
 It is also possible to redirect the log output to a file using the
 `BUILDCACHE_LOG_FILE` setting.
 
-## Direct mode (experimental)
+## Direct mode
 
 In direct mode BuildCache will try to find a cache hit based on the hash of
 the input file and its indirect input files (e.g. C/C++ include files),
