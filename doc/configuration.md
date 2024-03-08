@@ -16,7 +16,7 @@ The following options control the behavior of BuildCache:
 | `BUILDCACHE_COMPRESS_LEVEL` | `compress_level` | Cache compresion level (see below) | -1 |
 | `BUILDCACHE_DEBUG` | `debug` | Debug level | None |
 | `BUILDCACHE_DIR` | - | The cache root directory | `$HOME/.buildcache` |
-| `BUILDCACHE_DIRECT_MODE` | `direct_mode` | Enable direct mode | false |
+| `BUILDCACHE_DIRECT_MODE` | `direct_mode` | Enable direct mode | true |
 | `BUILDCACHE_DISABLE` | `disable` | Disable caching (bypass BuildCache) | false |
 | `BUILDCACHE_HARD_LINKS` | `hard_links` | Allow the use of hard links when caching | false |
 | `BUILDCACHE_HASH_EXTRA_FILES` | `hash_extra_files` | Extra file(s) whose content to add to the hash | None |

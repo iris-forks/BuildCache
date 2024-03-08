@@ -141,7 +141,7 @@ void set_defaults() noexcept {
   s_debug = -1;
   s_disable = false;
   s_dir = std::string();
-  s_direct_mode = false;
+  s_direct_mode = true;
   s_hard_links = false;
   s_hash_extra_files = string_list_t();
   s_impersonate = std::string();
