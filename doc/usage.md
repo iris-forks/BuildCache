@@ -159,3 +159,20 @@ Additionally, several default project settings have to be changed:
   * Can be turned on using the `<UseMultiToolTask>` property inside the `"Globals"` PropertyGroup in your `vcxproj`.
 * Set `<CLToolExe>` property to the symlink created previously.
   * Also placed inside the `"Globals"` PropertyGroup in your `vcxproj`.
+
+## Using with Cargo
+
+To use BuildCache when compiling Rust crates with Cargo the following steps are needed:
+
+- Set either the environment variable `RUSTC_WRAPPER`, or the key `rustc-workspace-wrapper` in the `[build]` section of the `config.toml` to `buildcache`.
+- Set either the environment variable `CARGO_INCREMENTAL` to `0`, or the key `incremental` in the `[build]` section of the `config.toml` to `false`.
+
+See https://doc.rust-lang.org/cargo/reference/config.html and https://doc.rust-lang.org/cargo/reference/environment-variables.html for further information.
+
+Additionally, since buildcache will cache the output of building a crate, the
+cached data may be significantly larger than when caching files for e.g. a C++
+project. To be able to handle this, the following might be required:
+
+- Enable `BUILDCACHE_COMPRESS`
+- Increase the value of `BUILDCACHE_MAX_CACHE_SIZE`
+- Increase the value of `BUILDCACHE_MAX_LOCAL_ENTRY_SIZE`.
