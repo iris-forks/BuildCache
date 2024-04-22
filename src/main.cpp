@@ -37,6 +37,7 @@
 #include <wrappers/ti_arm_cgt_wrapper.hpp>
 #include <wrappers/ti_arp32_wrapper.hpp>
 #include <wrappers/ti_c6x_wrapper.hpp>
+#include <wrappers/ti_c7x_wrapper.hpp>
 
 // These 3rd party includes are used for getting the version numbers.
 #include "buildcache_version.h"
@@ -112,6 +113,7 @@ std::unique_ptr<bcache::program_wrapper_t> find_suitable_wrapper(
        wrapper_create<bcache::ghs_wrapper_t>,
        wrapper_create<bcache::msvc_wrapper_t>,
        wrapper_create<bcache::ti_c6x_wrapper_t>,
+       wrapper_create<bcache::ti_c7x_wrapper_t>,
        wrapper_create<bcache::ti_arm_cgt_wrapper_t>,
        wrapper_create<bcache::ti_arp32_wrapper_t>,
        wrapper_create<bcache::cppcheck_wrapper_t>,

@@ -46,5 +46,7 @@ add_library(wrappers
   ti_common_wrapper.hpp
   ti_c6x_wrapper.cpp
   ti_c6x_wrapper.hpp
+  ti_c7x_wrapper.cpp
+  ti_c7x_wrapper.hpp
   )
 target_link_libraries(wrappers base config sys cache lua)
