@@ -5,9 +5,9 @@
    More information at
      https://renenyffenegger.ch/notes/development/Base64/Encoding-and-decoding-base-64-with-cpp
 
-   Version: 2.rc.04 (release candidate)
+   Version: 2.rc.08 (release candidate)
 
-   Copyright (C) 2004-2017, 2020 René Nyffenegger
+   Copyright (C) 2004-2017, 2020, 2021 René Nyffenegger
 
    This source code is provided 'as-is', without any express or implied
    warranty. In no event will the author be held liable for any damages
@@ -33,12 +33,15 @@
 
 #include "base64.h"
 
+#include <algorithm>
+#include <stdexcept>
+
  //
  // Depending on the url parameter in base64_chars, one of
  // two sets of base64 characters needs to be chosen.
  // They differ in their last two characters.
  //
-const char* base64_chars[2] = {
+static const char* base64_chars[2] = {
              "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
              "abcdefghijklmnopqrstuvwxyz"
              "0123456789"
@@ -59,8 +62,12 @@ static unsigned int pos_of_char(const unsigned char chr) {
     else if (chr >= '0' && chr <= '9') return chr - '0' + ('Z' - 'A') + ('z' - 'a') + 2;
     else if (chr == '+' || chr == '-') return 62; // Be liberal with input and accept both url ('-') and non-url ('+') base 64 characters (
     else if (chr == '/' || chr == '_') return 63; // Ditto for '/' and '_'
-
-    throw "If input is correct, this line should never be reached.";
+    else
+ //
+ // 2020-10-23: Throw std::exception rather than const char*
+ //(Pablo Martin-Gomez, https://github.com/Bouska)
+ //
+    throw std::runtime_error("Input is not valid base64-encoded data.");
 }
 
 static std::string insert_linebreaks(std::string str, size_t distance) {
@@ -112,7 +119,7 @@ std::string base64_encode(unsigned char const* bytes_to_encode, size_t in_len, b
  // for the last two positions, depending on the url
  // parameter.
  // A bool (as is the parameter url) is guaranteed
- // to evaluate to either 0 or 1 in C++ therfore,
+ // to evaluate to either 0 or 1 in C++ therefore,
  // the correct character set is chosen by subscripting
  // base64_chars with url.
  //
@@ -159,31 +166,22 @@ static std::string decode(String encoded_string, bool remove_linebreaks) {
  // or std::string_view (requires at least C++17)
  //
 
-    if (remove_linebreaks) {
+    if (encoded_string.empty()) return std::string();
 
-       if (! encoded_string.length() ) {
-           return "";
-       }
+    if (remove_linebreaks) {
 
        std::string copy(encoded_string);
 
-       size_t pos=0;
-       while ((pos = copy.find("\n", pos)) != std::string::npos) {
-           copy.erase(pos, 1);
-       }
+       copy.erase(std::remove(copy.begin(), copy.end(), '\n'), copy.end());
 
        return base64_decode(copy, false);
-
     }
 
     size_t length_of_string = encoded_string.length();
-    if (!length_of_string) return std::string("");
-
-    size_t in_len = length_of_string;
     size_t pos = 0;
 
  //
- // The approximate length (bytes) of the decoded string might be one ore
+ // The approximate length (bytes) of the decoded string might be one or
  // two bytes smaller, depending on the amount of trailing equal signs
  // in the encoded string. This approximation is needed to reserve
  // enough space in the string to be returned.
@@ -192,18 +190,46 @@ static std::string decode(String encoded_string, bool remove_linebreaks) {
     std::string ret;
     ret.reserve(approx_length_of_decoded_string);
 
-    while (pos < in_len) {
+    while (pos < length_of_string) {
+    //
+    // Iterate over encoded input string in chunks. The size of all
+    // chunks except the last one is 4 bytes.
+    //
+    // The last chunk might be padded with equal signs or dots
+    // in order to make it 4 bytes in size as well, but this
+    // is not required as per RFC 2045.
+    //
+    // All chunks except the last one produce three output bytes.
+    //
+    // The last chunk produces at least one and up to three bytes.
+    //
 
-       unsigned int pos_of_char_1 = pos_of_char(encoded_string[pos+1] );
+       size_t pos_of_char_1 = pos_of_char(encoded_string[pos+1] );
 
+    //
+    // Emit the first output byte that is produced in each chunk:
+    //
        ret.push_back(static_cast<std::string::value_type>( ( (pos_of_char(encoded_string[pos+0]) ) << 2 ) + ( (pos_of_char_1 & 0x30 ) >> 4)));
 
-       if (encoded_string[pos+2] != '=' && encoded_string[pos+2] != '.') { // accept URL-safe base 64 strings, too, so check for '.' also.
-
+       if ( ( pos + 2 < length_of_string  )       &&  // Check for data that is not padded with equal signs (which is allowed by RFC 2045)
+              encoded_string[pos+2] != '='        &&
+              encoded_string[pos+2] != '.'            // accept URL-safe base 64 strings, too, so check for '.' also.
+          )
+       {
+       //
+       // Emit a chunk's second byte (which might not be produced in the last chunk).
+       //
           unsigned int pos_of_char_2 = pos_of_char(encoded_string[pos+2] );
           ret.push_back(static_cast<std::string::value_type>( (( pos_of_char_1 & 0x0f) << 4) + (( pos_of_char_2 & 0x3c) >> 2)));
 
-          if (encoded_string[pos+3] != '=' && encoded_string[pos+3] != '.') {
+          if ( ( pos + 3 < length_of_string )     &&
+                 encoded_string[pos+3] != '='     &&
+                 encoded_string[pos+3] != '.'
+             )
+          {
+          //
+          // Emit a chunk's third byte (which might not be produced in the last chunk).
+          //
              ret.push_back(static_cast<std::string::value_type>( ( (pos_of_char_2 & 0x03 ) << 6 ) + pos_of_char(encoded_string[pos+3])   ));
           }
        }
@@ -215,7 +241,7 @@ static std::string decode(String encoded_string, bool remove_linebreaks) {
 }
 
 std::string base64_decode(std::string const& s, bool remove_linebreaks) {
-  return decode(s, remove_linebreaks);
+   return decode(s, remove_linebreaks);
 }
 
 std::string base64_encode(std::string const& s, bool url) {
@@ -250,7 +276,7 @@ std::string base64_encode_mime(std::string_view s) {
 }
 
 std::string base64_decode(std::string_view s, bool remove_linebreaks) {
-  return decode(s, remove_linebreaks);
+   return decode(s, remove_linebreaks);
 }
 
 #endif  // __cplusplus >= 201703L
