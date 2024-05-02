@@ -120,7 +120,7 @@ target_include_directories(zstd PRIVATE zstd/common)
 #---------------------------------------------------------------------------------------------------
 # Lua
 #---------------------------------------------------------------------------------------------------
-set(LUA_DIR lua-5.3.4)
+set(LUA_DIR lua-5.4.6)
 add_library(lua
   ${LUA_DIR}/src/lapi.c
   ${LUA_DIR}/src/lcode.c
@@ -144,7 +144,6 @@ add_library(lua
   ${LUA_DIR}/src/lzio.c
   ${LUA_DIR}/src/lauxlib.c
   ${LUA_DIR}/src/lbaselib.c
-  ${LUA_DIR}/src/lbitlib.c
   ${LUA_DIR}/src/lcorolib.c
   ${LUA_DIR}/src/ldblib.c
   ${LUA_DIR}/src/liolib.c
