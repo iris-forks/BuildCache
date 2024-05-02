@@ -35,11 +35,11 @@
 
 #define SDS_MAX_PREALLOC (1024*1024)
 #ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable:4200)
-#define __attribute__(x)
 typedef long long ssize_t;
 #define SSIZE_MAX (LLONG_MAX >> 1)
+#ifndef __clang__
+#define __attribute__(x)
+#endif
 #endif
 
 #include <sys/types.h>
@@ -275,10 +275,6 @@ void sds_free(void *ptr);
 
 #ifdef REDIS_TEST
 int sdsTest(int argc, char *argv[]);
-#endif
-
-#ifdef _MSC_VER
-#pragma warning(pop)
 #endif
 
 #endif
