@@ -285,7 +285,7 @@ std::unique_ptr<bcache::program_wrapper_t> find_suitable_wrapper(
   std::cout << "\nThird party components:\n";
   std::cout << "  cJSON " << CJSON_VERSION_MAJOR << "." << CJSON_VERSION_MINOR << "."
             << CJSON_VERSION_PATCH << "\n";
-  std::cout << "  cpp-base64 2.rc.04\n";
+  std::cout << "  cpp-base64 2.rc.08\n";
   std::cout << "  hiredis " << HIREDIS_MAJOR << "." << HIREDIS_MINOR << "." << HIREDIS_PATCH;
 #ifdef ENABLE_SSL
   std::cout << " (with SSL/TLS support)";

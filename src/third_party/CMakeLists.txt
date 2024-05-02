@@ -89,6 +89,9 @@ add_library(zstd
   zstd/decompress/zstd_ddict.c
   zstd/decompress/zstd_decompress.c
   zstd/decompress/zstd_decompress_block.c
+  zstd/deprecated/zbuff_common.c
+  zstd/deprecated/zbuff_compress.c
+  zstd/deprecated/zbuff_decompress.c
   zstd/dictBuilder/cover.c
   zstd/dictBuilder/divsufsort.c
   zstd/dictBuilder/fastcover.c
@@ -101,13 +104,23 @@ add_library(zstd
   zstd/legacy/zstd_v06.c
   zstd/legacy/zstd_v07.c
   )
+if (MSVC)
+  target_compile_options(zstd PRIVATE -DZSTD_DISABLE_ASM)
+else ()
+  if(CMAKE_SYSTEM_PROCESSOR MATCHES "amd64.*|AMD64.*|x86_64.*|X86_64.*")
+    enable_language(ASM)
+    target_sources(zstd PRIVATE zstd/decompress/huf_decompress_amd64.S)
+  else()
+    target_compile_options(zstd PRIVATE -DZSTD_DISABLE_ASM)
+  endif()
+endif ()
 target_include_directories(zstd INTERFACE .)
 target_include_directories(zstd PRIVATE zstd/common)
 
 #---------------------------------------------------------------------------------------------------
 # Lua
 #---------------------------------------------------------------------------------------------------
-set(LUA_DIR lua-5.3.4)
+set(LUA_DIR lua-5.4.6)
 add_library(lua
   ${LUA_DIR}/src/lapi.c
   ${LUA_DIR}/src/lcode.c
@@ -131,7 +144,6 @@ add_library(lua
   ${LUA_DIR}/src/lzio.c
   ${LUA_DIR}/src/lauxlib.c
   ${LUA_DIR}/src/lbaselib.c
-  ${LUA_DIR}/src/lbitlib.c
   ${LUA_DIR}/src/lcorolib.c
   ${LUA_DIR}/src/ldblib.c
   ${LUA_DIR}/src/liolib.c
