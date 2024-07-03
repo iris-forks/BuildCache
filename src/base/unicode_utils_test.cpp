@@ -177,3 +177,55 @@ TEST_CASE("strip() produces expected results") {
     CHECK_EQ(result, "Hello world");
   }
 }
+
+TEST_CASE("starts_with() produces expected results") {
+  SUBCASE("Case 1 - short match") {
+    const std::string str = "Here is a string";
+    const auto result = starts_with(str, "He");
+    CHECK_EQ(result, true);
+  }
+
+  SUBCASE("Case 2 - full match") {
+    const std::string str = "Here is a string";
+    const auto result = starts_with(str, "Here is a string");
+    CHECK_EQ(result, true);
+  }
+
+  SUBCASE("Case 3 - too long substring") {
+    const std::string str = "Here is a string";
+    const auto result = starts_with(str, "Here is a string with more words");
+    CHECK_EQ(result, false);
+  }
+
+  SUBCASE("Case 4 - no match") {
+    const std::string str = "Here is a string";
+    const auto result = starts_with(str, "ere is a");
+    CHECK_EQ(result, false);
+  }
+}
+
+TEST_CASE("ends_with() produces expected results") {
+  SUBCASE("Case 1 - short match") {
+    const std::string str = "Here is a string";
+    const auto result = ends_with(str, "ing");
+    CHECK_EQ(result, true);
+  }
+
+  SUBCASE("Case 2 - full match") {
+    const std::string str = "Here is a string";
+    const auto result = ends_with(str, "Here is a string");
+    CHECK_EQ(result, true);
+  }
+
+  SUBCASE("Case 3 - too long substring") {
+    const std::string str = "Here is a string";
+    const auto result = ends_with(str, "Aaand Here is a string");
+    CHECK_EQ(result, false);
+  }
+
+  SUBCASE("Case 4 - no match") {
+    const std::string str = "Here is a string";
+    const auto result = ends_with(str, "is a strin");
+    CHECK_EQ(result, false);
+  }
+}
