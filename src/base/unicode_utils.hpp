@@ -77,6 +77,18 @@ std::string rstrip(const std::string& str);
 /// @param str The string to strip.
 /// @returns a string without leading or trailing white space characters.
 std::string strip(const std::string& str);
+
+/// @brief Check if a string starts with a given substring.
+/// @param str The string.
+/// @param start_str The starting string to check for.
+/// @returns true if str starts with start_str.
+bool starts_with(const std::string& str, const std::string& start_str);
+
+/// @brief Check if a string ends with a given substring.
+/// @param str The string.
+/// @param end_str The starting string to check for.
+/// @returns true if str ends with end_str.
+bool ends_with(const std::string& str, const std::string& end_str);
 }  // namespace bcache
 
 #endif  // BUILDCACHE_UNICODE_UTILS_HPP_

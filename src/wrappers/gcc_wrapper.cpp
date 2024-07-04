@@ -277,6 +277,15 @@ bool gcc_wrapper_t::can_handle_command() {
     if (std::regex_match(cmd, clang_re)) {
       return true;
     }
+
+    // Special case: Some clang toolchains use a wrapper script called clang-target-wrapper.sh
+    // to wrap calls to clang.
+    if (cmd == "clang-target-wrapper.sh") {
+      // We expect to see "clang" or "clang++" in the symlink.
+      if (virt_cmd.find("clang") != std::string::npos) {
+        return true;
+      }
+    }
   }
 
   // On some systems (e.g. macos / XCode) the generic cc & c++ commands are copies of or hard links

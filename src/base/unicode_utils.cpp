@@ -245,4 +245,16 @@ std::string strip(const std::string& str) {
   return lstrip(rstrip(str));
 }
 
+bool starts_with(const std::string& str, const std::string& start_str) {
+  return str.substr(0, start_str.size()) == start_str;
+}
+
+bool ends_with(const std::string& str, const std::string& end_str) {
+  if (end_str.size() > str.size()) {
+    return false;
+  }
+  const auto pos = str.size() - end_str.size();
+  return str.substr(pos, end_str.size()) == end_str;
+}
+
 }  // namespace bcache
