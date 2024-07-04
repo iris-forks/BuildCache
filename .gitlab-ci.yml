@@ -66,11 +66,10 @@ build_linux:
 build_windows:
   stage: build
   tags:
-    - shared-windows
-    - windows-1809
+    - saas-windows-medium-amd64
   variables:
     CTEST_OUTPUT_ON_FAILURE: "ON"
-    MSVC_PATH: "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools"
+    MSVC_PATH: "C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools"
   before_script:
     # "Run" vsdevcmd.bat in PowerShell, to set up MSVC environment variables.
     # See: https://github.com/microsoft/vswhere/issues/150#issuecomment-485381959
@@ -90,7 +89,7 @@ build_windows:
     # Prepare build.
     - New-Item -ItemType Directory -Path build -Force
     - cd build
-    - cmake -S ../src -B . -G "Visual Studio 16 2019" -A x64
+    - cmake -S ../src -B . -G "Visual Studio 17 2022" -A x64
 
     # Build.
     - cmake --build . --config Release
