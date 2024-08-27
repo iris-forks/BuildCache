@@ -350,7 +350,13 @@ std::map<std::string, expected_file_t> gcc_wrapper_t::get_build_files() {
       files["object"] = {m_args[next_idx], true};
       found_object_file = true;
     }
+
+    if ((m_args[i] == "-MF") && (next_idx < m_args.size()) && (m_args[next_idx] != "-")) {
+      // We happily accept the last -MF to be the intended one.
+      files["dependency"] = {m_args[next_idx], true};
+    }
   }
+
   if (!found_object_file) {
     throw std::runtime_error("Unable to get the target object file.");
   }
