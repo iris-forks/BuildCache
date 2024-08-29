@@ -51,6 +51,7 @@ std::string s_config_file;
 // Configuration options.
 config::cache_accuracy_t s_accuracy;
 bool s_cache_link_commands;
+bool s_cache_on_failure;
 bool s_compress;
 config::compress_format_t s_compress_format;
 int32_t s_compress_level;
@@ -135,6 +136,7 @@ config::compress_format_t to_compress_format(const std::string& str) {
 void set_defaults() noexcept {
   s_accuracy = config::cache_accuracy_t::DEFAULT;
   s_cache_link_commands = false;
+  s_cache_on_failure = false;
   s_compress = true;
   s_compress_format = config::compress_format_t::DEFAULT;
   s_compress_level = -1;
@@ -196,6 +198,13 @@ void load_from_file(const std::string& file_name) {
     const auto* node = cJSON_GetObjectItemCaseSensitive(root, "cache_link_commands");
     if (cJSON_IsBool(node) != 0) {
       s_cache_link_commands = (cJSON_IsTrue(node) != 0);
+    }
+  }
+
+  {
+    const auto* node = cJSON_GetObjectItemCaseSensitive(root, "cache_on_failure");
+    if (cJSON_IsBool(node) != 0) {
+      s_cache_on_failure = (cJSON_IsTrue(node) != 0);
     }
   }
 
@@ -439,6 +448,13 @@ void init(const char* bcache_dir) {
     }
 
     {
+      const env_var_t env("BUILDCACHE_CACHE_ON_FAILURE");
+      if (env) {
+        s_cache_on_failure = env.as_bool();
+      }
+    }
+
+    {
       const env_var_t env("BUILDCACHE_COMPRESS");
       if (env) {
         s_compress = env.as_bool();
@@ -653,6 +669,10 @@ cache_accuracy_t accuracy() {
 
 bool cache_link_commands() {
   return s_cache_link_commands;
+}
+
+bool cache_on_failure() {
+  return s_cache_on_failure;
 }
 
 bool compress() {
