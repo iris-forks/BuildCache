@@ -103,6 +103,12 @@ string_list_t make_preprocessor_cmd(const string_list_t& args,
     } else if (arg == "-o") {
       drop_this_arg = true;
       drop_next_arg = true;
+    } else if (arg == "-MF" || arg == "-MT" || arg == "-MQ") {
+      drop_this_arg = true;
+      drop_next_arg = true;
+    } else if (starts_with(arg, "-M")) {
+      // This includes -MD, but since we also drop -o it's ok.
+      drop_this_arg = true;
     }
     if (!drop_this_arg) {
       preprocess_args += arg;
@@ -344,7 +350,13 @@ std::map<std::string, expected_file_t> gcc_wrapper_t::get_build_files() {
       files["object"] = {m_args[next_idx], true};
       found_object_file = true;
     }
+
+    if ((m_args[i] == "-MF") && (next_idx < m_args.size()) && (m_args[next_idx] != "-")) {
+      // We happily accept the last -MF to be the intended one.
+      files["dependency"] = {m_args[next_idx], true};
+    }
   }
+
   if (!found_object_file) {
     throw std::runtime_error("Unable to get the target object file.");
   }
