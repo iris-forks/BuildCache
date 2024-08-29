@@ -67,6 +67,9 @@ cache_accuracy_t accuracy();
 /// @returns true if BuildCache should cache link commands.
 bool cache_link_commands();
 
+/// @returns true if BuildCache should cache results from processes that exit with a failure code.
+bool cache_on_failure();
+
 /// @returns true if BuildCache should compress data in the cache.
 bool compress();
 

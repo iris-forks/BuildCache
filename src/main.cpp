@@ -196,6 +196,8 @@ std::unique_ptr<bcache::program_wrapper_t> find_suitable_wrapper(
               << "\n";
     std::cout << "  BUILDCACHE_CACHE_LINK_COMMANDS:    "
               << (bcache::config::cache_link_commands() ? "true" : "false") << "\n";
+    std::cout << "  BUILDCACHE_CACHE_ON_FAILURE:       "
+              << (bcache::config::cache_on_failure() ? "true" : "false") << "\n";
     std::cout << "  BUILDCACHE_COMPRESS:               "
               << (bcache::config::compress() ? "true" : "false") << "\n";
     std::cout << "  BUILDCACHE_COMPRESS_FORMAT:        "
