@@ -229,6 +229,13 @@ string_list_t get_compiler_shared_libraries(const std::string& sysroot) {
   return compiler_shared_libraries;
 }
 
+// Utility function that throws a `runtime_error` with the name of the crate prepended to the
+// message.
+void panic(const std::string& crate_name, const std::string& message) {
+  const auto& header = crate_name.empty() ? "<unknown crate>" : crate_name;
+  throw std::runtime_error(string_list_t{header, message}.join(": "));
+}
+
 }  // namespace
 
 // A wrapper for rustc as invoked by cargo. This implementation is inspired heavily by the rules
@@ -274,7 +281,7 @@ std::map<std::string, expected_file_t> rust_wrapper_t::get_build_files() {
   const auto& args = m_args + string_list_t{"--print", "file-names"};
   const auto& result = run_rustc(args, true);
   if (result.return_code != 0) {
-    panic("Failed to call " + args.join(""));
+    panic(m_crate_name, "Failed to call " + args.join(""));
   }
 
   files += string_list_t(result.std_out, "\n");
@@ -322,7 +329,7 @@ std::string rust_wrapper_t::get_program_id() {
   // Get the version string for the compiler.
   auto result = run_rustc({m_args[0], "-vV"}, true);
   if (result.return_code != 0) {
-    panic("Unable to get the compiler version information string.");
+    panic(m_crate_name, "Unable to get the compiler version information string.");
   }
 
   hasher.update(result.std_out);
@@ -330,7 +337,7 @@ std::string rust_wrapper_t::get_program_id() {
   // Get the sysroot of the crate.
   result = run_rustc({m_args[0], "--print=sysroot"}, true);
   if (result.return_code != 0) {
-    panic("Unable to get the compiler sysroot.");
+    panic(m_crate_name, "Unable to get the compiler sysroot.");
   }
 
   std::string sysroot = strip(result.std_out);
@@ -556,12 +563,12 @@ string_list_t rust_wrapper_t::parse_options(const string_list_t& unresolved_argu
 
   // We've now parsed all options so now we start verification.
   if (errors.size() > 0) {
-    panic(errors.join("\n"));
+    panic(crate_name, errors.join("\n"));
   }
 
   // We need to have exactly one input file.
   if (input.empty()) {
-    panic("input file required to cache cargo/rustc compilation");
+    panic(crate_name, "input file required to cache cargo/rustc compilation");
   }
 
   // We only allow --emit with arguments of link, metadata and dep-info, and require "link" and
@@ -571,23 +578,23 @@ string_list_t rust_wrapper_t::parse_options(const string_list_t& unresolved_argu
   if ((emit.size() == 0U) ||
       !std::includes(emit.begin(), emit.end(), required_emit.begin(), required_emit.end()) ||
       !std::includes(allowed_emit.begin(), allowed_emit.end(), emit.begin(), emit.end())) {
-    panic("--emit required to cache cargo/rustc compilation");
+    panic(crate_name, "--emit required to cache cargo/rustc compilation");
   }
 
   // We need to know the output directory to perform caching.
   if (output_dir.empty()) {
-    panic("--output-dir required to cache cargo/rustc compilation");
+    panic(crate_name, "--output-dir required to cache cargo/rustc compilation");
   }
 
   // We need to know the crate name to figure out where the depinfo goes, but we also save it to be
   // used ing `rust_wrapper_t::panic`.
   if (crate_name.empty()) {
-    panic("--crate-name required to cache cargo/rustc compilation");
+    panic(crate_name, "--crate-name required to cache cargo/rustc compilation");
   }
 
   // We can't cache if none of the supported crate types have been seen.
   if (!crate_type_rlib && !crate_type_static_lib) {
-    panic("--crate-type required to cache cargo/rustc compilation");
+    panic(crate_name, "--crate-type required to cache cargo/rustc compilation");
   }
 
   // Prepare a list of all known static libraries.
@@ -664,7 +671,7 @@ void rust_wrapper_t::process_implicit_input_files_and_relevant_env_vars() {
   auto result = run_rustc(filtered_args, false);
 
   if (result.return_code != 0) {
-    panic("Failed to call " + m_args.join(""));
+    panic(m_crate_name, "Failed to call " + m_args.join(""));
   }
 
   string_list_t lines = string_list_t(file::read(tmp_file.path()), "\n");
@@ -721,13 +728,6 @@ void rust_wrapper_t::process_implicit_input_files_and_relevant_env_vars() {
 
   m_implicit_input_files = std::move(implicit_input_files);
   m_relevant_env_vars = std::move(relevant_env_vars);
-}
-
-// Utility function that throws a `runtime_error` with the name of the crate prepended to the
-// message.
-void rust_wrapper_t::panic(const std::string& message) {
-  const auto& header = m_crate_name.empty() ? "<unknown crate>" : m_crate_name;
-  throw std::runtime_error(string_list_t{header, message}.join(": "));
 }
 
 }  // namespace bcache

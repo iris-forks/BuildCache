@@ -46,7 +46,6 @@ private:
 
   string_list_t parse_options(const string_list_t& unresolved_arguments);
   void process_implicit_input_files_and_relevant_env_vars();
-  void panic(const std::string& message);
 
   string_list_t m_relevant_args;
   std::map<std::string, std::string> m_relevant_env_vars;
