@@ -84,6 +84,9 @@ string_list_t make_preprocessor_cmd(const string_list_t& args, bool use_direct_m
   bool has_coverage_output = false;
   for (const auto& arg : args) {
     if (is_source_file(arg)) {
+      if (!source_file.empty()) {
+        throw std::runtime_error("Only a single source file is supported.");
+      }
       source_file = arg;
       continue;
     }
@@ -120,7 +123,10 @@ string_list_t make_preprocessor_cmd(const string_list_t& args, bool use_direct_m
     preprocess_args += std::string("/showIncludes");
   }
 
-  // Add source file to end
+  // Add source file to the end of the command line.
+  if (source_file.empty()) {
+    throw std::runtime_error("Missing source file.");
+  }
   preprocess_args += std::string("--");
   preprocess_args += source_file;
 
