@@ -76,16 +76,23 @@ std::string drop_leading_colon(const std::string& s) {
 
 string_list_t make_preprocessor_cmd(const string_list_t& args, bool use_direct_mode) {
   string_list_t preprocess_args;
+  std::string source_file;
 
   // Drop arguments that we do not want/need, and check if the build will produce debug/coverage
   // info.
   bool has_debug_symbols = false;
   bool has_coverage_output = false;
   for (const auto& arg : args) {
-    bool drop_this_arg = false;
+    if (is_source_file(arg)) {
+      if (!source_file.empty()) {
+        throw std::runtime_error("Only a single source file is supported.");
+      }
+      source_file = arg;
+      continue;
+    }
     if (arg_equals(arg, "c") || arg_starts_with(arg, "Fo") || arg_equals(arg, "C") ||
-        arg_equals(arg, "E") || arg_equals(arg, "EP")) {
-      drop_this_arg = true;
+        arg_equals(arg, "E") || arg_equals(arg, "EP") || arg_equals(arg, "-")) {
+      continue;
     }
     if (arg_equals(arg, "Z7") || arg_equals(arg, "Zi") || arg_equals(arg, "ZI")) {
       has_debug_symbols = true;
@@ -94,9 +101,7 @@ string_list_t make_preprocessor_cmd(const string_list_t& args, bool use_direct_m
         arg_equals(arg, "ZI")) {
       has_coverage_output = true;
     }
-    if (!drop_this_arg) {
-      preprocess_args += arg;
-    }
+    preprocess_args += arg;
   }
 
   // Should we inhibit line info in the preprocessed output?
@@ -117,6 +122,13 @@ string_list_t make_preprocessor_cmd(const string_list_t& args, bool use_direct_m
     // Add argument for listing include files (used for direct mode).
     preprocess_args += std::string("/showIncludes");
   }
+
+  // Add source file to the end of the command line.
+  if (source_file.empty()) {
+    throw std::runtime_error("Missing source file.");
+  }
+  preprocess_args += std::string("--");
+  preprocess_args += source_file;
 
   return preprocess_args;
 }
@@ -252,9 +264,10 @@ string_list_t msvc_wrapper_t::get_relevant_arguments() {
       // Generally unwanted argument (things that will not change how we go from preprocessed code
       // to binary object files)?
       const auto first_two_chars = arg.substr(0, 2);
-      const bool is_unwanted_arg = ((arg_equals(first_two_chars, "F") && !arg_equals(arg, "F")) ||
-                                    arg_equals(first_two_chars, "I") ||
-                                    arg_equals(first_two_chars, "D") || is_source_file(arg));
+      const bool is_unwanted_arg =
+          ((arg_equals(first_two_chars, "F") && !arg_equals(arg, "F")) ||
+           arg_equals(first_two_chars, "I") || arg_equals(first_two_chars, "D") ||
+           is_source_file(arg) || arg_equals(arg, "-"));
 
       if (!is_unwanted_arg) {
         filtered_args += arg;
