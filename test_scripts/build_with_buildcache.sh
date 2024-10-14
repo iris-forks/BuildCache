@@ -125,6 +125,23 @@ if grep -q "Direct mode cache miss" "${LOG_DIR}/test-pass-3.log"; then
     EXIT_CODE=1
 fi
 
+echo "======== Lua wrapper (echo) ========"
+ls -lsa "${PROJDIR}/lua-examples"
+BUILDCACHE_LOG_FILE="${LOG_DIR}/test-lua-pass-1.log" BUILDCACHE_LUA_PATH="${PROJDIR}/lua-examples" buildcache echo "Hello, Lua!"
+buildcache -s
+echo "--- LOG (Lua pass 1) ---"
+cat "${LOG_DIR}/test-lua-pass-1.log"
+
+BUILDCACHE_LOG_FILE="${LOG_DIR}/test-lua-pass-2.log" BUILDCACHE_LUA_PATH="${PROJDIR}/lua-examples" buildcache echo "Hello, Lua!"
+buildcache -s
+echo "--- LOG (Lua pass 2) ---"
+cat "${LOG_DIR}/test-lua-pass-2.log"
+
+if ! grep -q "Cache hit" "${LOG_DIR}/test-lua-pass-2.log"; then
+    echo "*** FAIL: The second Lua pass didn't contain cache hits."
+    EXIT_CODE=1
+fi
+
 # Clean up.
 cleanup
 
