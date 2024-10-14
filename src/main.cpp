@@ -94,14 +94,11 @@ std::unique_ptr<bcache::program_wrapper_t> find_suitable_wrapper(
             bcache::debug::log(bcache::debug::DEBUG)
                 << "Found matching Lua wrapper for " << exe_path.virtual_path() << ": "
                 << script_path;
-            break;
+            return wrapper;
           }
           wrapper = nullptr;
         }
       }
-    }
-    if (wrapper) {
-      break;
     }
   }
 
