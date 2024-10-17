@@ -50,12 +50,16 @@ void assert_state_initialized(const lua_State* state) {
   }
 }
 
-bool pop_bool(lua_State* state) {
+bool pop_bool(lua_State* state, bool keep_value_on_the_stack = false) {
   assert_state_initialized(state);
   if (lua_isboolean(state, -1) == 0) {
     throw std::runtime_error("Expected a boolean value on the stack.");
   }
-  return (lua_toboolean(state, -1) != 0);
+  const auto value = (lua_toboolean(state, -1) != 0);
+  if (!keep_value_on_the_stack) {
+    lua_pop(state, 1);
+  }
+  return value;
 }
 
 int pop_int(lua_State* state, bool keep_value_on_the_stack = false) {
@@ -63,7 +67,11 @@ int pop_int(lua_State* state, bool keep_value_on_the_stack = false) {
   if (lua_isinteger(state, -1) == 0) {
     throw std::runtime_error("Expected an integer value on the stack.");
   }
-  return static_cast<int>(lua_tointeger(state, -1));
+  const auto value = static_cast<int>(lua_tointeger(state, -1));
+  if (!keep_value_on_the_stack) {
+    lua_pop(state, 1);
+  }
+  return value;
 }
 
 std::string pop_string(lua_State* state, bool keep_value_on_the_stack = false) {
@@ -189,8 +197,11 @@ void push(lua_State* state, const file::file_info_t& data) {
 //--------------------------------------------------------------------------------------------------
 
 int l_append_path(lua_State* state) {
+  // Get arguments (in reverse order).
   const auto append = pop_string(state);
   const auto path = pop_string(state);
+
+  // Call the C++ function and push the result.
   push(state, file::append_path(path, append));
   return 1;
 }
@@ -221,12 +232,13 @@ int l_get_file_info(lua_State* state) {
 }
 
 int l_get_file_part(lua_State* state) {
-  // Get arguments.
-  const auto path = pop_string(state);
+  // Get arguments (in reverse order).
   auto include_ext = true;
-  if (lua_gettop(state) > 0) {
+  if (lua_gettop(state) >= 2) {
+    // include_ext is an optional argument (default is true).
     include_ext = pop_bool(state);
   }
+  const auto path = pop_string(state);
 
   // Call the C++ function and push the result.
   push(state, file::get_file_part(path, include_ext));
